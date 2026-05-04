@@ -2,6 +2,8 @@ using PdiCrud.Data;
 using PdiCrud.Routes;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using PdiCrud.Handlers;
 
 var builder = WebApplication.CreateBuilder(args);
 

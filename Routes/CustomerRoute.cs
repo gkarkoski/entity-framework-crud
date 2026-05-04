@@ -3,6 +3,7 @@ using PdiCrud.Data;
 using PdiCrud.Data.Entities;
 using PdiCrud.Models;
 using PdiCrud.Models.Request;
+using PdiCrud.Handlers;
 
 namespace PdiCrud.Routes;
 
@@ -24,7 +25,7 @@ public static class CustomerRoute
                         ZipCode = x.ZipCode
                     })
                     .ToList();
-                
+
                 var customer = new CustomerModel(request.Name, addresses);
                 context.Customer.Add(customer);
                 await context.SaveChangesAsync();
@@ -44,25 +45,8 @@ public static class CustomerRoute
             });
 
         // Retrieve a list of all users in dB
-        app.MapGet("/customers",
-            async (CustomerContext context) =>
-            {
-                var clients = await context.Customer
-                    .Include(c => c.Addresses)
-                    .OrderBy(a => a.Name)
-                    .Select(c => new CustomerResponse(
-                        c.Id,
-                        c.Name,
-                        c.Addresses.Select(a => new AddressResponse(
-                            a.Id,
-                            a.Street,
-                            a.Number,
-                            a.City,
-                            a.State,
-                            a.ZipCode)).ToList()
-                    )).ToListAsync();
-                return Results.Ok(new { succes = true, data = clients });
-            });
+        app.MapGet("/customers", CustomerHandler.GetCustomers);
+
 
         // Retrieve one customer by Id
         app.MapGet("/customers/{id:guid}", async (Guid id, CustomerContext context) =>
@@ -147,7 +131,7 @@ public static class CustomerRoute
                         }
                     }
                 }
-                
+
                 // Used this try/catch exception because had some issues with DbUpdateConcurrency
                 // Kept in code, the problem was just a wrong table in PATCH context. 
                 try
@@ -173,7 +157,7 @@ public static class CustomerRoute
 
                 return Results.Ok($"Customer Id:{customer.Id}, updated successfully.");
             });
-        
+
         // Delete a customer address by AddressId, used in edit modal
         app.MapDelete("/addresses/{addressId:guid}",
             async (Guid addressId, CustomerContext context) =>
@@ -190,3 +174,5 @@ public static class CustomerRoute
             });
     }
 }
+
+    
