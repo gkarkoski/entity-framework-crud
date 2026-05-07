@@ -12,37 +12,37 @@ public static class CustomerRoute
     public static void MapCustomerRoute(this WebApplication app)
     {
         // Create a new Customer
-        app.MapPost("/customers",
-            async (CustomerRequest request, CustomerContext context) =>
-            {
-                var addresses = (request.Addresses ?? [])
-                    .Select(x => new AddressModel
-                    {
-                        Street = x.Street,
-                        Number = x.Number,
-                        City = x.City,
-                        State = x.State,
-                        ZipCode = x.ZipCode
-                    })
-                    .ToList();
-
-                var customer = new CustomerModel(request.Name, addresses);
-                context.Customer.Add(customer);
-                await context.SaveChangesAsync();
-
-                var response = new CustomerResponse(
-                    customer.Id,
-                    customer.Name,
-                    customer.Addresses.Select(a => new AddressResponse(
-                        a.Id,
-                        a.Street,
-                        a.Number,
-                        a.City,
-                        a.State,
-                        a.ZipCode)).ToList()
-                );
-                return Results.Created($"customers/{customer.Id}", response);
-            });
+        app.MapPost("/customers",CustomerHandler.CreateCustomers);
+            // async (CustomerRequest request, CustomerContext context) =>
+            // {
+            //     var addresses = (request.Addresses ?? [])
+            //         .Select(x => new AddressModel
+            //         {
+            //             Street = x.Street,
+            //             Number = x.Number,
+            //             City = x.City,
+            //             State = x.State,
+            //             ZipCode = x.ZipCode
+            //         })
+            //         .ToList();
+            //
+            //     var customer = new CustomerModel(request.Name, addresses);
+            //     context.Customer.Add(customer);
+            //     await context.SaveChangesAsync();
+            //
+            //     var response = new CustomerResponse(
+            //         customer.Id,
+            //         customer.Name,
+            //         customer.Addresses.Select(a => new AddressResponse(
+            //             a.Id,
+            //             a.Street,
+            //             a.Number,
+            //             a.City,
+            //             a.State,
+            //             a.ZipCode)).ToList()
+            //     );
+            //     return Results.Created($"customers/{customer.Id}", response);
+            // });
 
         // Retrieve a list of all users in dB
         app.MapGet("/customers", CustomerHandler.GetCustomers);
@@ -93,7 +93,7 @@ public static class CustomerRoute
 
                 if (customer is null) return Results.NotFound($"Customer id:{id}, not found.");
 
-                if (patchRequest.Name is not null) customer.Name = patchRequest.Name;
+                if (!string.IsNullOrWhiteSpace(patchRequest.Name)) customer.Name = patchRequest.Name;
 
                 if (patchRequest.Addresses is not null)
                 {
@@ -119,11 +119,11 @@ public static class CustomerRoute
 
                         if (existsById.TryGetValue(address.Id.Value, out var addressUpdate))
                         {
-                            if (address.Street is not null) addressUpdate.Street = address.Street;
-                            if (address.Number is not null) addressUpdate.Number = address.Number;
-                            if (address.City is not null) addressUpdate.City = address.City;
-                            if (address.State is not null) addressUpdate.State = address.State;
-                            if (address.ZipCode is not null) addressUpdate.ZipCode = address.ZipCode;
+                            if (string.IsNullOrWhiteSpace(address.Street)) addressUpdate.Street = address.Street;
+                            if (string.IsNullOrWhiteSpace(address.Number)) addressUpdate.Number = address.Number;
+                            if (string.IsNullOrWhiteSpace(address.City)) addressUpdate.City = address.City;
+                            if (string.IsNullOrWhiteSpace(address.State)) addressUpdate.State = address.State;
+                            if (string.IsNullOrWhiteSpace(address.ZipCode)) addressUpdate.ZipCode = address.ZipCode;
                         }
                         else
                         {

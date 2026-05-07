@@ -28,4 +28,38 @@ public static class CustomerHandler
 
         return Task.FromResult(Results.Ok(new { succes = true, data = customers }));
     }
+
+    public static Task<IResult> CreateCustomers(CustomerContext ctx, CustomerRequest request)
+    {
+        var addresses = (request.Addresses ?? [])
+            .Select(x => new AddressModel
+            {
+                Street = x.Street,
+                Number = x.Number,
+                City = x.City,
+                State = x.State,
+                ZipCode = x.ZipCode
+            })
+            .ToList();
+
+        var customer = new CustomerModel(request.Name, addresses);
+        ctx.Customer.Add(customer);
+        ctx.SaveChangesAsync();
+
+        var response = new CustomerResponse(
+            customer.Id,
+            customer.Name,
+            customer.Addresses.Select(a => new AddressResponse(
+                a.Id,
+                a.Street,
+                a.Number,
+                a.City,
+                a.State,
+                a.ZipCode)).ToList()
+        );
+        return Task.FromResult(Results.Created(request.Name, response));
+        
+        
+    }
+    
 }
