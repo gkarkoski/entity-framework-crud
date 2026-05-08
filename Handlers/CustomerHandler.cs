@@ -61,5 +61,30 @@ public static class CustomerHandler
         
         
     }
+
+    public static Task<IResult> GetCustomersById(Guid id, CustomerContext ctx)
+    {
+        var customer = ctx.Customer
+            .Include(c => c.Addresses)
+            .SingleOrDefault(c => c.Id == id);
+        
+        if  (customer == null) return Task.FromResult(Results.NotFound());
+
+        var response = new CustomerResponse(
+            customer.Id,
+            customer.Name,
+            customer.Addresses
+                .Select(a => new AddressResponse(
+                    a.Id,
+                    a.Street,
+                    a.Number,
+                    a.City,
+                    a.State,
+                    a.ZipCode)).ToList()
+        );
+        
+        return Task.FromResult(Results.Ok(response));
+    }
+
     
 }

@@ -13,64 +13,13 @@ public static class CustomerRoute
     {
         // Create a new Customer
         app.MapPost("/customers",CustomerHandler.CreateCustomers);
-            // async (CustomerRequest request, CustomerContext context) =>
-            // {
-            //     var addresses = (request.Addresses ?? [])
-            //         .Select(x => new AddressModel
-            //         {
-            //             Street = x.Street,
-            //             Number = x.Number,
-            //             City = x.City,
-            //             State = x.State,
-            //             ZipCode = x.ZipCode
-            //         })
-            //         .ToList();
-            //
-            //     var customer = new CustomerModel(request.Name, addresses);
-            //     context.Customer.Add(customer);
-            //     await context.SaveChangesAsync();
-            //
-            //     var response = new CustomerResponse(
-            //         customer.Id,
-            //         customer.Name,
-            //         customer.Addresses.Select(a => new AddressResponse(
-            //             a.Id,
-            //             a.Street,
-            //             a.Number,
-            //             a.City,
-            //             a.State,
-            //             a.ZipCode)).ToList()
-            //     );
-            //     return Results.Created($"customers/{customer.Id}", response);
-            // });
-
+        
         // Retrieve a list of all users in dB
         app.MapGet("/customers", CustomerHandler.GetCustomers);
-
-
+        
         // Retrieve one customer by Id
-        app.MapGet("/customers/{id:guid}", async (Guid id, CustomerContext context) =>
-        {
-            var customer = await context.Customer.Include(c => c.Addresses)
-                .SingleOrDefaultAsync(c => c.Id == id);
-
-            if (customer is null) return Results.NotFound($"Customer Id:{id}, not found.");
-
-            var response = new CustomerResponse(
-                customer.Id,
-                customer.Name, customer.Addresses.Select(x =>
-                        new AddressResponse(
-                            x.Id,
-                            x.Street,
-                            x.Number,
-                            x.City,
-                            x.State,
-                            x.ZipCode))
-                    .ToList());
-            return Results.Ok(new { succes = true, data = response });
-        });
-
-
+        app.MapGet("/customers/{id:guid}", CustomerHandler.GetCustomersById);
+        
         // Delete one customer by Id
         app.MapDelete("/customers/{id:guid}",
             async (Guid id, CustomerContext context) =>
