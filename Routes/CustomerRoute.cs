@@ -21,92 +21,11 @@ public static class CustomerRoute
         app.MapGet("/customers/{id:guid}", CustomerHandler.GetCustomersById);
         
         // Delete one customer by Id
-        app.MapDelete("/customers/{id:guid}",
-            async (Guid id, CustomerContext context) =>
-            {
-                var a = await context.Customer.FindAsync(id);
-                if (a is null) return Results.NotFound($"Client: {id}, not found.");
-                context.Customer.Remove(a);
-                await context.SaveChangesAsync();
-                return Results.Ok($"Customer Id:{id} has been deleted.");
-            });
-
+        app.MapDelete("/customers/{id:guid}", CustomerHandler.DeleteCustomer);
+        
         // Update a customer data by Id 
-        app.MapPatch("/customers/{id:guid}",
-            async (Guid id, CustomerPatchRequest patchRequest, CustomerContext context) =>
-            {
-                var customer = await context.Customer
-                    .Include(c => c.Addresses)
-                    .AsTracking()
-                    .SingleOrDefaultAsync(c => c.Id == id);
-
-                if (customer is null) return Results.NotFound($"Customer id:{id}, not found.");
-
-                if (!string.IsNullOrWhiteSpace(patchRequest.Name)) customer.Name = patchRequest.Name;
-
-                if (patchRequest.Addresses is not null)
-                {
-                    var existsById = customer.Addresses.ToDictionary(a => a.Id);
-
-                    foreach (var address in patchRequest.Addresses)
-                    {
-                        if (address.Id is null || address.Id == Guid.Empty)
-                        {
-                            var newAddress = new AddressModel
-                            {
-                                Id = Guid.NewGuid(),
-                                Street = address.Street ?? "",
-                                Number = address.Number ?? "",
-                                City = address.City ?? "",
-                                State = address.State ?? "",
-                                ZipCode = address.ZipCode ?? "",
-                                CustomerId = customer.Id
-                            };
-                            context.Address.Add(newAddress);
-                            continue;
-                        }
-
-                        if (existsById.TryGetValue(address.Id.Value, out var addressUpdate))
-                        {
-                            if (string.IsNullOrWhiteSpace(address.Street)) addressUpdate.Street = address.Street;
-                            if (string.IsNullOrWhiteSpace(address.Number)) addressUpdate.Number = address.Number;
-                            if (string.IsNullOrWhiteSpace(address.City)) addressUpdate.City = address.City;
-                            if (string.IsNullOrWhiteSpace(address.State)) addressUpdate.State = address.State;
-                            if (string.IsNullOrWhiteSpace(address.ZipCode)) addressUpdate.ZipCode = address.ZipCode;
-                        }
-                        else
-                        {
-                            return Results.NotFound($"Address {address.Id.Value} not found");
-                        }
-                    }
-                }
-
-                // Used this try/catch exception because had some issues with DbUpdateConcurrency
-                // Kept in code, the problem was just a wrong table in PATCH context. 
-                try
-                {
-                    await context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    var entries = context.ChangeTracker.Entries()
-                        .Select(e => new
-                        {
-                            Entity = e.Entity.GetType().Name,
-                            State = e.State.ToString(),
-                            Keys = e.Properties.Where(p => p.Metadata.IsPrimaryKey())
-                                .ToDictionary(p => p.Metadata.Name, p => p.CurrentValue)
-                        }).ToList();
-
-                    return Results.Problem(
-                        detail: System.Text.Json.JsonSerializer.Serialize(entries),
-                        statusCode: 409,
-                        title: "Concurrency_Error.");
-                }
-
-                return Results.Ok($"Customer Id:{customer.Id}, updated successfully.");
-            });
-
+        app.MapPatch("/customers/{id:guid}", CustomerHandler.UpdateCustomer);
+        
         // Delete a customer address by AddressId, used in edit modal
         app.MapDelete("/addresses/{addressId:guid}",
             async (Guid addressId, CustomerContext context) =>

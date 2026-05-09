@@ -4,6 +4,6 @@ using PdiCrud.Data;
 namespace PdiCrud.Models.Request;
 
 public record CustomerRequest(
-    string? Name,
+    string Name,
     List<AddressRequest>? Addresses
 );

@@ -1,6 +1,7 @@
 namespace PdiCrud.Models.Request;
 
-public record AddressRequest(
+public abstract record AddressRequest(
+    Guid Id,
     string? Street,
     string? Number,
     string? City,
