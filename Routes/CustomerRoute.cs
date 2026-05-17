@@ -27,19 +27,7 @@ public static class CustomerRoute
         app.MapPatch("/customers/{id:guid}", CustomerHandler.UpdateCustomer);
         
         // Delete a customer address by AddressId, used in edit modal
-        app.MapDelete("/addresses/{addressId:guid}",
-            async (Guid addressId, CustomerContext context) =>
-            {
-                var address = await context.Address.SingleOrDefaultAsync(a => a.Id == addressId);
-
-                if (address is null)
-                    return
-                        Results.NotFound($"Address: {addressId}, not found.");
-
-                context.Address.Remove(address);
-                await context.SaveChangesAsync();
-                return Results.Ok($"Address: {addressId} deleted successfully.");
-            });
+        app.MapDelete("/addresses/{addressId:guid}", CustomerHandler.DeleteAddress);
     }
 }
 
