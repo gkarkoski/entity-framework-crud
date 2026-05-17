@@ -147,4 +147,18 @@ public static class CustomerHandler
 
         return Results.Ok($"Customer id:{id} updated successfully.");
     }
+
+    public static async Task<IResult> DeleteAddress(Guid addressId, CustomerContext ctx)
+    {
+        var address = await  ctx.Address.SingleOrDefaultAsync(a => a.Id == addressId);
+
+        if (address is null)
+            return
+                Results.NotFound($"Address: {addressId}, not found.");
+
+        ctx.Address.Remove(address);
+        await ctx.SaveChangesAsync();
+        return Results.Ok($"Address: {addressId} deleted successfully.");
+    }
+    
 }
